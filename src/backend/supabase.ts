@@ -6,11 +6,23 @@ import type { GameBackend, GameEvent, NewEvent } from "./types";
 // Security relies on Row Level Security + an unguessable game_id, NOT on
 // hiding the key. The frontend uses ONLY the publishable key. NEVER reference
 // a secret/service_role key in client code.
+//
+// The publishable URL + key are PUBLIC by design (they're shipped in every
+// client bundle), so we fall back to the project's committed values when the
+// build-time env vars are absent. This keeps the deployed site working even if
+// the repo Variables aren't set. Override via VITE_SUPABASE_* to point at a
+// different project.
 
-const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
+const FALLBACK_URL = "https://tzqiorwfkjqpqjefklrf.supabase.co";
+const FALLBACK_KEY = "sb_publishable_1uessLo_WNKsLewylxfkEw_7I_t1z46";
 
-const sb = createClient(url ?? "", key ?? "");
+const url =
+  (import.meta.env.VITE_SUPABASE_URL as string | undefined) || FALLBACK_URL;
+const key =
+  (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ||
+  FALLBACK_KEY;
+
+const sb = createClient(url, key);
 
 // Map a database row (snake_case) to our GameEvent (camelCase).
 interface Row {

@@ -1,25 +1,44 @@
-name: Apply Supabase schema
+name: Setup Supabase (run schema.sql)
 
-# Runs supabase/schema.sql against your Supabase Postgres. Manual only.
-# Requires a repo Secret named SUPABASE_DB_URL containing the connection string.
-# Use the **Session pooler** URI from Supabase (Connect button) — it's IPv4, which
-# GitHub-hosted runners need:
+# Connects to your Supabase Postgres and applies supabase/schema.sql
+# (creates the events table + RLS policies + realtime). Idempotent: safe to
+# run as many times as you like.
+#
+# To connect, this needs your database connection string ONCE. A workflow can't
+# reach a private database without credentials — there's no way around that.
+# Two ways to provide it:
+#   A) Easiest — Actions tab -> this workflow -> "Run workflow" -> paste the
+#      connection string into the "db_url" box -> Run. (It's masked in logs.)
+#   B) Or set a repo Secret named SUPABASE_DB_URL and just press Run.
+#
+# Use the **Session pooler** URI from Supabase (Connect button) — it's IPv4,
+# which GitHub-hosted runners require:
 #   postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres
+
 on:
   workflow_dispatch:
+    inputs:
+      db_url:
+        description: "Supabase Session-pooler connection string (leave blank to use the SUPABASE_DB_URL secret)"
+        required: false
+        default: ""
 
 jobs:
   migrate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Run schema.sql
+      - name: Apply schema.sql
         env:
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          INPUT_URL: ${{ inputs.db_url }}
+          SECRET_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          if [ -z "$SUPABASE_DB_URL" ]; then
-            echo "::error::SUPABASE_DB_URL secret is not set."
+          DB_URL="${INPUT_URL:-$SECRET_URL}"
+          if [ -z "$DB_URL" ]; then
+            echo "::error::No connection string. Paste one into the db_url input or set the SUPABASE_DB_URL secret."
             exit 1
           fi
-          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/schema.sql
-          echo "Schema applied."
+          # Keep the connection string out of the logs.
+          echo "::add-mask::$DB_URL"
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -f supabase/schema.sql
+          echo "✅ Schema applied. Your events table is ready."
