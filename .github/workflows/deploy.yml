@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, claude/buraco-2player-game-600lJ]
   workflow_dispatch:
 
 permissions:
