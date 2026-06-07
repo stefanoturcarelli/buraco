@@ -1,0 +1,25 @@
+name: Apply Supabase schema
+
+# Runs supabase/schema.sql against your Supabase Postgres. Manual only.
+# Requires a repo Secret named SUPABASE_DB_URL containing the connection string.
+# Use the **Session pooler** URI from Supabase (Connect button) — it's IPv4, which
+# GitHub-hosted runners need:
+#   postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres
+on:
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run schema.sql
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::error::SUPABASE_DB_URL secret is not set."
+            exit 1
+          fi
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/schema.sql
+          echo "Schema applied."
