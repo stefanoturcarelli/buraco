@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 interface GameStatusResponse {
@@ -13,8 +13,8 @@ interface GameStatusResponse {
   error?: string;
 }
 
-export default function LobbyWaitingPage({ params }: { params: { gameId: string } }) {
-  const { gameId } = params;
+export default function LobbyWaitingPage({ params }: { params: Promise<{ gameId: string }> }) {
+  const { gameId } = use(params);
   const router = useRouter();
   const [status, setStatus] = useState<GameStatusResponse["status"] | null>(null);
   const [players, setPlayers] = useState<string[]>([]);
