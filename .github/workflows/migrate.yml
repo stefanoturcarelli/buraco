@@ -31,16 +31,17 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - uses: supabase/setup-cli@3c2f5e2ae34c34e428e8e206e2c4d21fa2d20fbf # v2.1.1
         with:
-          version: 2.105.0
+          version: 2.107.0
 
       - name: Apply migrations
         run: |
           set -euo pipefail
-          supabase db push --project-ref "$SUPABASE_PROJECT_REF"
+          supabase link --project-ref "$SUPABASE_PROJECT_REF"
+          supabase db push --linked
           echo "### Migrations applied ✓" >> "$GITHUB_STEP_SUMMARY"
           echo "Branch: \`$GITHUB_REF_NAME\` — commit: \`$GITHUB_SHA\`" >> "$GITHUB_STEP_SUMMARY"
         env:
